@@ -56,7 +56,7 @@ public class UserDaoJDBCImpl implements UserDao {
             logger.warn(sqlException);
         }
     }
-
+    // TODO После каждого добавления должен быть вывод в консоль ( User с именем – name добавлен в базу данных )
     public void saveUser(String name, String lastName, byte age) {
         try {
             Statement stmt = conn.createStatement();

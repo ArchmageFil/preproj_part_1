@@ -1,6 +1,9 @@
 package jm.task.core.jdbc.util;
 
 import lombok.SneakyThrows;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -13,7 +16,8 @@ import java.util.Properties;
 public class Util {
     private final static Path PATH_TO_CONFIG = Path.of(
             "src/main/resources/jdbc-mysql.properties");
-    private static Properties jdbcMysql = new Properties();
+    private static final Properties JDBC_MYSQL = new Properties();
+    private static final Logger LOGGER = LogManager.getLogger();
     private static String driver;
     private static String url;
     private static String dbName;
@@ -24,14 +28,14 @@ public class Util {
 
     static {
         try (InputStream in = Files.newInputStream(PATH_TO_CONFIG)) {
-            jdbcMysql.load(in);
-            driver = jdbcMysql.getProperty("driver",
+            JDBC_MYSQL.load(in);
+            driver = JDBC_MYSQL.getProperty("driver",
                     "com.mysql.cj.jdbc.Driver");
-            url = jdbcMysql.getProperty("url",
+            url = JDBC_MYSQL.getProperty("url",
                     "jdbc:mysql://localhost:3306/");
-            dbName = jdbcMysql.getProperty("dbName", "@myLocalBD");
-            userName = jdbcMysql.getProperty("userName", "admin");
-            pwd = jdbcMysql.getProperty("pwd", "admin");
+            dbName = JDBC_MYSQL.getProperty("dbName", "@myLocalBD");
+            userName = JDBC_MYSQL.getProperty("userName", "admin");
+            pwd = JDBC_MYSQL.getProperty("pwd", "admin");
         } catch (IOException io) {
             io.printStackTrace();
         }
@@ -44,6 +48,7 @@ public class Util {
                 return BdConnection;
             }
         }
+        LOGGER.info("Соединение потеряно, перезапускаем");
         connect();
         return getBdConnection();
     }
@@ -52,13 +57,16 @@ public class Util {
         try {
             Class.forName(driver);
         } catch (ClassNotFoundException cnfe) {
-            cnfe.printStackTrace();
+            LOGGER.warn("Класс драйвера не загрузился");
+            LOGGER.warn(cnfe);
         }
         try {
             BdConnection = DriverManager.getConnection(
                     url + dbName, userName, pwd);
         } catch (SQLException sqlException) {
-            sqlException.printStackTrace();
+            LOGGER.warn("Соединение обломалось. Адрес:{} БД:{} Логин:{} Пароль:{}",
+                    url, dbName, userName, pwd);
+            LOGGER.warn(sqlException);
         }
     }
 }

@@ -24,7 +24,7 @@ public class User {
     public User() {
 
     }
-
+    // TODO: Получение всех User из базы и вывод в консоль ( должен быть переопределен toString в классе User)
     public User(String name, String lastName, Byte age) {
         this.name = name;
         this.lastName = lastName;

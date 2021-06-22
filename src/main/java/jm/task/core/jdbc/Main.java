@@ -1,20 +1,20 @@
 package jm.task.core.jdbc;
-import jm.task.core.jdbc.dao.UserDao;
-import jm.task.core.jdbc.dao.UserDaoJDBCImpl;
-import org.apache.logging.log4j.util.PropertiesUtil;
+
+import jm.task.core.jdbc.service.UserService;
+import jm.task.core.jdbc.service.UserServiceImpl;
 
 public class Main {
     public static void main(String[] args) {
+        UserService us = new UserServiceImpl();
+        us.createUsersTable();
+        us.saveUser("Ася", "Казанцева", (byte) 10);
+        us.saveUser("Иван", "Иванов", (byte) 20);
+        us.saveUser("Сидр", "Сидоров", (byte) 30);
+        us.saveUser("Василий", "Васин", (byte) 40);
 
-        // TODO: реализуйте алгоритм здесь
-        //  Создание таблицы User(ов)
-        //  Добавление 4 User(ов) в таблицу с данными на свой выбор.
-        //  После каждого добавления должен быть вывод в консоль ( User с именем – name добавлен в базу данных )
-        //  Получение всех User из базы и вывод в консоль ( должен быть переопределен toString в классе User)
-        //  Очистка таблицы User(ов)
-        //  Удаление таблицы
-        UserDao ud = new UserDaoJDBCImpl();
-        ud.createUsersTable();
-        ud.dropUsersTable();
+        us.getAllUsers().forEach(System.out::println);
+
+        us.cleanUsersTable();
+        us.dropUsersTable();
     }
 }
