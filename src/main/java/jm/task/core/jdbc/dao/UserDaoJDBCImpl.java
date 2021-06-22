@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.sql.*;
+import java.util.LinkedList;
 import java.util.List;
 
 @SuppressWarnings({"SpellCheckingInspection", "SqlResolve"})
@@ -16,14 +17,6 @@ public class UserDaoJDBCImpl implements UserDao {
 
     public UserDaoJDBCImpl() {
         conn = Util.getBdConnection();
-
-// TODO:Обработка всех исключений, связанных с работой с базой данных должна находиться в dao
-//  Создание таблицы для User(ов) – не должно приводить к исключению, если такая таблица уже существует
-//  Удаление таблицы User(ов) – не должно приводить к исключению, если таблицы не существует
-//  Очистка содержания таблицы
-//  Добавление User в таблицу
-//  Удаление User из таблицы ( по id )
-//  Получение всех User(ов) из таблицы
     }
 
     public void createUsersTable() {
@@ -56,13 +49,16 @@ public class UserDaoJDBCImpl implements UserDao {
             logger.warn(sqlException);
         }
     }
-    // TODO После каждого добавления должен быть вывод в консоль ( User с именем – name добавлен в базу данных )
+
     public void saveUser(String name, String lastName, byte age) {
         try {
             Statement stmt = conn.createStatement();
-            String query = "";                          // TODO: реализовать
+            String query = String.format(
+                    "insert into mydbtest.`lesson_1.1.3` (name, lastname, age) Values (\"%s\", \"%s\", %d)",
+                    name, lastName, age);
             stmt.execute(query);
-            logger.info("Пользователь " + name + "  Создан");
+            System.out.printf("User с именем – %s добавлен в базу данных \n", name);
+            logger.info("Пользователь " + name + ": cоздан");
         } catch (SQLException sqlException) {
             logger.warn("Вышибло при создании");
             logger.warn(sqlException);
@@ -72,8 +68,7 @@ public class UserDaoJDBCImpl implements UserDao {
     public void removeUserById(long id) {
         try {
             Statement stmt = conn.createStatement();
-            String sql = "DELETE FROM `mydbtest`.`lesson_1.1.3` \" +\n" +
-                    "            \"WHERE id = " + id;
+            String sql = "DELETE FROM `lesson_1.1.3` where id = " + id;
             stmt.executeUpdate(sql);
             logger.info("Посльзователь {} cтерт, наверное", id);
         } catch (SQLException sqlException) {
@@ -83,14 +78,27 @@ public class UserDaoJDBCImpl implements UserDao {
     }
 
     public List<User> getAllUsers() {
-        // TODO: реализовать
-        return null;
+        List<User> listUser = new LinkedList<>();
+        try {
+            Statement stmt = conn.createStatement();
+            String sql = "SELECT * FROM mydbtest.`lesson_1.1.3`;";
+            ResultSet rs = stmt.executeQuery(sql);
+            while (rs.next()) {
+                listUser.add(new User(rs.getLong(1), rs.getString(2),
+                        rs.getString(3), rs.getByte(4)));
+            }
+            logger.info("Считали в Список {} штук", listUser.size());
+        } catch (SQLException sqlException) {
+            logger.warn("Вышибло при считывании всех пользователей БД");
+            logger.warn(sqlException);
+        }
+        return listUser;
     }
 
     public void cleanUsersTable() {
         try {
             Statement stmt = conn.createStatement();
-            String sql = "";
+            String sql = "TRUNCATE table mydbtest.`lesson_1.1.3`";
             stmt.executeUpdate(sql);
             logger.info("Таблица потерта");
         } catch (SQLException sqlException) {

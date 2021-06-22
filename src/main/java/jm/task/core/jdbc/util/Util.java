@@ -1,6 +1,5 @@
 package jm.task.core.jdbc.util;
 
-import lombok.SneakyThrows;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -18,13 +17,16 @@ public class Util {
             "src/main/resources/jdbc-mysql.properties");
     private static final Properties JDBC_MYSQL = new Properties();
     private static final Logger LOGGER = LogManager.getLogger();
+    private static final int CONNECTION_TIMEOUT = 2;
+
     private static String driver;
     private static String url;
     private static String dbName;
     private static String userName;
     private static String pwd;
 
-    private static Connection BdConnection;
+    private static volatile Connection bdConnection;
+    private static volatile boolean run = false;
 
     static {
         try (InputStream in = Files.newInputStream(PATH_TO_CONFIG)) {
@@ -41,16 +43,16 @@ public class Util {
         }
     }
 
-    @SneakyThrows
     public static Connection getBdConnection() {
-        if (BdConnection != null) {
-            if (!BdConnection.isClosed()) {
-                return BdConnection;
-            }
+        if (!run) {
+            Thread connectionDaemon = new Thread(getDaemon());
+            connectionDaemon.setDaemon(run = true);
+            connectionDaemon.start();
         }
-        LOGGER.info("Соединение потеряно, перезапускаем");
-        connect();
-        return getBdConnection();
+        while (bdConnection == null) {
+            Thread.onSpinWait();
+        }
+        return bdConnection;
     }
 
     private static void connect() {
@@ -61,12 +63,34 @@ public class Util {
             LOGGER.warn(cnfe);
         }
         try {
-            BdConnection = DriverManager.getConnection(
+            bdConnection = DriverManager.getConnection(
                     url + dbName, userName, pwd);
         } catch (SQLException sqlException) {
             LOGGER.warn("Соединение обломалось. Адрес:{} БД:{} Логин:{} Пароль:{}",
                     url, dbName, userName, pwd);
             LOGGER.warn(sqlException);
         }
+    }
+
+    @SuppressWarnings({"BusyWait", "InfiniteLoopStatement"})
+    private static Runnable getDaemon() {
+        return () -> {
+            LOGGER.info("Запустили демона run = {}", run);
+            while (true) {
+                if (bdConnection == null) {
+                    LOGGER.info("Соединение потеряно, перезапускаем");
+                    connect();
+                } else {
+                    try {
+                        if (bdConnection.isValid(CONNECTION_TIMEOUT)) {
+                            Thread.sleep(3000);
+                        }
+                    } catch (SQLException | InterruptedException sqlIntEx) {
+                        LOGGER.warn("При проверке соединения с БД случилась фигня");
+                        LOGGER.warn(sqlIntEx);
+                    }
+                }
+            }
+        };
     }
 }
