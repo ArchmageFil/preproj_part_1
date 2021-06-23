@@ -4,6 +4,8 @@ import jm.task.core.jdbc.service.UserService;
 import jm.task.core.jdbc.service.UserServiceImpl;
 
 public class Main {
+    public static final boolean IS_JDBC = true;
+
     public static void main(String[] args) {
         UserService us = new UserServiceImpl();
         us.createUsersTable();

@@ -1,7 +1,13 @@
 package jm.task.core.jdbc.util;
 
+import jm.task.core.jdbc.model.User;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.cfg.Configuration;
+import org.hibernate.service.ServiceRegistry;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,9 +30,14 @@ public class Util {
     private static String dbName;
     private static String userName;
     private static String pwd;
+    //параметры для Hibernate
+    private static final String hibernate_show_sql = "true";
+    private static final String hibernate_hbm2ddl_auto = "validate";
+    private static final String dialect = "org.hibernate.dialect.MySQLDialect";
+    private static SessionFactory sessionFactory;
 
-    private static volatile Connection bdConnection;
     private static volatile boolean run = false;
+    private static volatile Connection bdConnection;
 
     //  Статический блок для подгрузки настроек
     static {
@@ -50,7 +61,7 @@ public class Util {
      *
      * @return Рабочее соединение с БД
      */
-    public static Connection getBdConnection() {
+    public static Connection getJdbcConnection() {
         if (!run) {
             Thread connectionDaemon = new Thread(getDaemon());
             connectionDaemon.setDaemon(run = true);
@@ -63,7 +74,18 @@ public class Util {
     }
 
     /**
-     * Загрузка драйвера и создание подключения
+     * @return Новую сессию от Фабрики сессий
+     */
+    public static Session getHibernateConnection() {
+        if (sessionFactory == null) {
+            sessionFactory = createSessionFactory(mySqlConfig());
+            LOGGER.info("создали фабрику сессий");
+        }
+        return sessionFactory.openSession();
+    }
+
+    /**
+     * Загрузка драйвера JDBC и создание подключения
      */
     private static void connect() {
         try {
@@ -80,6 +102,21 @@ public class Util {
                     url, dbName, userName, pwd);
             LOGGER.warn(sqlException);
         }
+    }
+
+    /**
+     * Внутренний метод для созданиия фбрики сессий
+     *
+     * @param config - org.hibernate.cfg.Configuration;
+     * @return готовую Фабрику Сессий
+     */
+    private static SessionFactory createSessionFactory(Configuration config) {
+        LOGGER.info("Создаем Фабрику сессий с конфигом {}",
+                config.getProperties().toString());
+        StandardServiceRegistryBuilder sSRB = new StandardServiceRegistryBuilder();
+        sSRB.applySettings(config.getProperties());
+        ServiceRegistry sr = sSRB.build();
+        return config.buildSessionFactory(sr);
     }
 
     /**
@@ -108,5 +145,23 @@ public class Util {
                 }
             }
         };
+    }
+
+    /**
+     * Создает конфиг Hibernate для mySQL
+     *
+     * @return загрузчик для Фабрики сессий
+     */
+    private static Configuration mySqlConfig() {
+        Configuration config = new Configuration();
+        config.addAnnotatedClass(User.class);
+        config.setProperty("hibernate.dialect", dialect);
+        config.setProperty("hibernate.connection.driver_class", driver);
+        config.setProperty("hibernate.connection.url", url + dbName);
+        config.setProperty("hibernate.connection.username", userName);
+        config.setProperty("hibernate.connection.password", pwd);
+        config.setProperty("hibernate.show_sql", hibernate_show_sql);
+        config.setProperty("hibernate.hbm2ddl.auto", hibernate_hbm2ddl_auto);
+        return config;
     }
 }

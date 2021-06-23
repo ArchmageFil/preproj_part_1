@@ -2,7 +2,6 @@ package jm.task.core.jdbc.dao;
 
 import jm.task.core.jdbc.model.User;
 import jm.task.core.jdbc.util.Util;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -16,20 +15,19 @@ public class UserDaoJDBCImpl implements UserDao {
     private final Logger logger = LogManager.getLogger();
 
     public UserDaoJDBCImpl() {
-        conn = Util.getBdConnection();
+        conn = Util.getJdbcConnection();
     }
 
     public void createUsersTable() {
         try (Statement stmt = conn.createStatement()) {
-            String query = "CREATE TABLE `mydbtest`.`lesson_1.1.3` (\n" +
+            stmt.execute("CREATE TABLE `mydbtest`.`lesson_1.1.3` (\n" +
                     "  `id` BIGINT(64) NOT NULL AUTO_INCREMENT,\n" +
                     "  `name` VARCHAR(255) NOT NULL,\n" +
                     "  `lastName` VARCHAR(255) NOT NULL,\n" +
                     "  `age` TINYINT(8) NOT NULL,\n" +
                     "  PRIMARY KEY (`id`))\n" +
                     "ENGINE = InnoDB\n" +
-                    "DEFAULT CHARACTER SET = utf8;";
-            stmt.execute(query);
+                    "DEFAULT CHARACTER SET = utf8;");
             logger.info("БД Создана");
         } catch (SQLException sqlException) {
             logger.warn("Вышибло при создании");
@@ -39,8 +37,7 @@ public class UserDaoJDBCImpl implements UserDao {
 
     public void dropUsersTable() {
         try (Statement stmt = conn.createStatement()) {
-            String sql = "DROP TABLE `mydbtest`.`lesson_1.1.3`";
-            stmt.executeUpdate(sql);
+            stmt.executeUpdate("DROP TABLE `mydbtest`.`lesson_1.1.3`");
             logger.info("БД удалена");
         } catch (SQLException sqlException) {
             logger.warn("Вышибло при удалении");
@@ -49,24 +46,41 @@ public class UserDaoJDBCImpl implements UserDao {
     }
 
     public void saveUser(String name, String lastName, byte age) {
-        try (Statement stmt = conn.createStatement()) {
-            String query = String.format(
-                    "insert into mydbtest.`lesson_1.1.3` (name, lastname, age) Values (\"%s\", \"%s\", %d)",
-                    name, lastName, age);
-            stmt.execute(query);
+        try (PreparedStatement stmt = conn.prepareStatement(
+                "insert into mydbtest.`lesson_1.1.3` (name, lastname, age) "
+                        + "Values (?, ?, ?)")) {
+            conn.setAutoCommit(false);
+            stmt.setString(1, name);
+            stmt.setString(2, lastName);
+            stmt.setByte(3, age);
+            stmt.addBatch();
+            stmt.executeUpdate();
+
+            conn.commit();
             System.out.printf("User с именем – %s добавлен в базу данных \n", name);
             logger.info("Пользователь " + name + ": cоздан");
+            conn.setAutoCommit(true);
         } catch (SQLException sqlException) {
             logger.warn("Вышибло при создании");
             logger.warn(sqlException);
+            try {
+                conn.rollback();
+            } catch (SQLException throwables) {
+                logger.warn("Вышибло при откате транзакции");
+            }
         }
     }
 
     public void removeUserById(long id) {
-        try (Statement stmt = conn.createStatement()) {
-            String sql = "DELETE FROM `lesson_1.1.3` where id = " + id;
-            stmt.executeUpdate(sql);
+        try (PreparedStatement stmt = conn.prepareStatement(
+                "DELETE FROM `lesson_1.1.3` where id = ?")) {
+            conn.setAutoCommit(false);
+            stmt.setLong(1, id);
+            stmt.addBatch();
+            stmt.executeUpdate();
+            conn.commit();
             logger.info("Посльзователь {} cтерт, наверное", id);
+            conn.setAutoCommit(true);
         } catch (SQLException sqlException) {
             logger.warn("Вышибло при стирании пользователя по АйПи");
             logger.warn(sqlException);
@@ -76,8 +90,8 @@ public class UserDaoJDBCImpl implements UserDao {
     public List<User> getAllUsers() {
         List<User> listUser = new LinkedList<>();
         try (Statement stmt = conn.createStatement()) {
-            String sql = "SELECT * FROM mydbtest.`lesson_1.1.3`;";
-            ResultSet rs = stmt.executeQuery(sql);
+            ResultSet rs = stmt.executeQuery(
+                    "SELECT * FROM mydbtest.`lesson_1.1.3`;");
             while (rs.next()) {
                 listUser.add(new User(rs.getLong(1), rs.getString(2),
                         rs.getString(3), rs.getByte(4)));
@@ -92,8 +106,7 @@ public class UserDaoJDBCImpl implements UserDao {
 
     public void cleanUsersTable() {
         try (Statement stmt = conn.createStatement()) {
-            String sql = "TRUNCATE table mydbtest.`lesson_1.1.3`";
-            stmt.executeUpdate(sql);
+            stmt.executeUpdate("TRUNCATE table mydbtest.`lesson_1.1.3`");
             logger.info("Таблица потерта");
         } catch (SQLException sqlException) {
             logger.warn("Вышибло при стирании всех данных в БД");
