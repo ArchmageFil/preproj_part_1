@@ -20,8 +20,7 @@ public class UserDaoJDBCImpl implements UserDao {
     }
 
     public void createUsersTable() {
-        try {
-            Statement stmt = conn.createStatement();
+        try (Statement stmt = conn.createStatement()) {
             String query = "CREATE TABLE `mydbtest`.`lesson_1.1.3` (\n" +
                     "  `id` BIGINT(64) NOT NULL AUTO_INCREMENT,\n" +
                     "  `name` VARCHAR(255) NOT NULL,\n" +
@@ -39,8 +38,7 @@ public class UserDaoJDBCImpl implements UserDao {
     }
 
     public void dropUsersTable() {
-        try {
-            Statement stmt = conn.createStatement();
+        try (Statement stmt = conn.createStatement()) {
             String sql = "DROP TABLE `mydbtest`.`lesson_1.1.3`";
             stmt.executeUpdate(sql);
             logger.info("БД удалена");
@@ -51,8 +49,7 @@ public class UserDaoJDBCImpl implements UserDao {
     }
 
     public void saveUser(String name, String lastName, byte age) {
-        try {
-            Statement stmt = conn.createStatement();
+        try (Statement stmt = conn.createStatement()) {
             String query = String.format(
                     "insert into mydbtest.`lesson_1.1.3` (name, lastname, age) Values (\"%s\", \"%s\", %d)",
                     name, lastName, age);
@@ -66,8 +63,7 @@ public class UserDaoJDBCImpl implements UserDao {
     }
 
     public void removeUserById(long id) {
-        try {
-            Statement stmt = conn.createStatement();
+        try (Statement stmt = conn.createStatement()) {
             String sql = "DELETE FROM `lesson_1.1.3` where id = " + id;
             stmt.executeUpdate(sql);
             logger.info("Посльзователь {} cтерт, наверное", id);
@@ -79,8 +75,7 @@ public class UserDaoJDBCImpl implements UserDao {
 
     public List<User> getAllUsers() {
         List<User> listUser = new LinkedList<>();
-        try {
-            Statement stmt = conn.createStatement();
+        try (Statement stmt = conn.createStatement()) {
             String sql = "SELECT * FROM mydbtest.`lesson_1.1.3`;";
             ResultSet rs = stmt.executeQuery(sql);
             while (rs.next()) {
@@ -96,8 +91,7 @@ public class UserDaoJDBCImpl implements UserDao {
     }
 
     public void cleanUsersTable() {
-        try {
-            Statement stmt = conn.createStatement();
+        try (Statement stmt = conn.createStatement()) {
             String sql = "TRUNCATE table mydbtest.`lesson_1.1.3`";
             stmt.executeUpdate(sql);
             logger.info("Таблица потерта");

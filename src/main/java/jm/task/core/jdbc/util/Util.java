@@ -18,7 +18,7 @@ public class Util {
     private static final Properties JDBC_MYSQL = new Properties();
     private static final Logger LOGGER = LogManager.getLogger();
     private static final int CONNECTION_TIMEOUT = 2;
-
+    // параметры для драйвера
     private static String driver;
     private static String url;
     private static String dbName;
@@ -28,6 +28,7 @@ public class Util {
     private static volatile Connection bdConnection;
     private static volatile boolean run = false;
 
+    //  Статический блок для подгрузки настроек
     static {
         try (InputStream in = Files.newInputStream(PATH_TO_CONFIG)) {
             JDBC_MYSQL.load(in);
@@ -43,6 +44,12 @@ public class Util {
         }
     }
 
+    /**
+     * Проверяет, был ли уже запущен наблюддатель, и если нет - создает.
+     * Затем возвдащает созданное или наличествующее  соединение к БД.
+     *
+     * @return Рабочее соединение с БД
+     */
     public static Connection getBdConnection() {
         if (!run) {
             Thread connectionDaemon = new Thread(getDaemon());
@@ -55,6 +62,9 @@ public class Util {
         return bdConnection;
     }
 
+    /**
+     * Загрузка драйвера и создание подключения
+     */
     private static void connect() {
         try {
             Class.forName(driver);
@@ -72,6 +82,12 @@ public class Util {
         }
     }
 
+    /**
+     * Шаблон для наблюдателя за соединением к БД. Сам себя назначить не может
+     * - вылетает исключение
+     *
+     * @return Демон, следящий за соединением.
+     */
     @SuppressWarnings({"BusyWait", "InfiniteLoopStatement"})
     private static Runnable getDaemon() {
         return () -> {
