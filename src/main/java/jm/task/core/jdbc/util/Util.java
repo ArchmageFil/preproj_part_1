@@ -31,8 +31,8 @@ public class Util {
     private static String userName;
     private static String pwd;
     //параметры для Hibernate
-    private static final String hibernate_show_sql = "true";
-    private static final String hibernate_hbm2ddl_auto = "validate";
+    private static final String hibernate_show_sql = "false";
+    private static final String hibernate_hbm2ddl_auto = "none";
     private static final String dialect = "org.hibernate.dialect.MySQLDialect";
     private static SessionFactory sessionFactory;
 
@@ -116,6 +116,7 @@ public class Util {
         StandardServiceRegistryBuilder sSRB = new StandardServiceRegistryBuilder();
         sSRB.applySettings(config.getProperties());
         ServiceRegistry sr = sSRB.build();
+        config.addAnnotatedClass(User.class);
         return config.buildSessionFactory(sr);
     }
 
