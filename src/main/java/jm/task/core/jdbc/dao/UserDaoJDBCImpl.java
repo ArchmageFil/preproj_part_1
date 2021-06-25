@@ -12,7 +12,7 @@ import java.util.List;
 @SuppressWarnings({"SpellCheckingInspection", "SqlResolve"})
 public class UserDaoJDBCImpl implements UserDao {
     private final Connection conn;
-    private final Logger logger = LogManager.getLogger();
+    private static final Logger LOGGER = LogManager.getLogger();
 
     public UserDaoJDBCImpl() {
         conn = Util.getJdbcConnection();
@@ -28,20 +28,20 @@ public class UserDaoJDBCImpl implements UserDao {
                     "  PRIMARY KEY (`id`))\n" +
                     "ENGINE = InnoDB\n" +
                     "DEFAULT CHARACTER SET = utf8;");
-            logger.info("БД Создана");
+            LOGGER.info("БД Создана");
         } catch (SQLException sqlException) {
-            logger.warn("Вышибло при создании");
-            logger.warn(sqlException);
+            LOGGER.warn("Вышибло при создании");
+            LOGGER.warn(sqlException);
         }
     }
 
     public void dropUsersTable() {
         try (Statement stmt = conn.createStatement()) {
             stmt.executeUpdate("DROP TABLE `mydbtest`.`lesson_1.1.3`");
-            logger.info("БД удалена");
+            LOGGER.info("БД удалена");
         } catch (SQLException sqlException) {
-            logger.warn("Вышибло при удалении");
-            logger.warn(sqlException);
+            LOGGER.warn("Вышибло при удалении");
+            LOGGER.warn(sqlException);
         }
     }
 
@@ -58,15 +58,15 @@ public class UserDaoJDBCImpl implements UserDao {
 
             conn.commit();
             System.out.printf("User с именем – %s добавлен в базу данных \n", name);
-            logger.info("Пользователь " + name + ": cоздан");
+            LOGGER.info("Пользователь " + name + ": cоздан");
             conn.setAutoCommit(true);
         } catch (SQLException sqlException) {
-            logger.warn("Вышибло при создании");
-            logger.warn(sqlException);
+            LOGGER.warn("Вышибло при создании");
+            LOGGER.warn(sqlException);
             try {
                 conn.rollback();
             } catch (SQLException throwables) {
-                logger.warn("Вышибло при откате транзакции");
+                LOGGER.warn("Вышибло при откате транзакции");
             }
         }
     }
@@ -79,11 +79,11 @@ public class UserDaoJDBCImpl implements UserDao {
             stmt.addBatch();
             stmt.executeUpdate();
             conn.commit();
-            logger.info("Посльзователь {} cтерт, наверное", id);
+            LOGGER.info("Посльзователь {} cтерт, наверное", id);
             conn.setAutoCommit(true);
         } catch (SQLException sqlException) {
-            logger.warn("Вышибло при стирании пользователя по АйПи");
-            logger.warn(sqlException);
+            LOGGER.warn("Вышибло при стирании пользователя по АйПи");
+            LOGGER.warn(sqlException);
         }
     }
 
@@ -96,10 +96,10 @@ public class UserDaoJDBCImpl implements UserDao {
                 listUser.add(new User(rs.getLong(1), rs.getString(2),
                         rs.getString(3), rs.getByte(4)));
             }
-            logger.info("Считали в Список {} штук", listUser.size());
+            LOGGER.info("Считали в Список {} штук", listUser.size());
         } catch (SQLException sqlException) {
-            logger.warn("Вышибло при считывании всех пользователей БД");
-            logger.warn(sqlException);
+            LOGGER.warn("Вышибло при считывании всех пользователей БД");
+            LOGGER.warn(sqlException);
         }
         return listUser;
     }
@@ -107,10 +107,10 @@ public class UserDaoJDBCImpl implements UserDao {
     public void cleanUsersTable() {
         try (Statement stmt = conn.createStatement()) {
             stmt.executeUpdate("TRUNCATE table mydbtest.`lesson_1.1.3`");
-            logger.info("Таблица потерта");
+            LOGGER.info("Таблица потерта");
         } catch (SQLException sqlException) {
-            logger.warn("Вышибло при стирании всех данных в БД");
-            logger.warn(sqlException);
+            LOGGER.warn("Вышибло при стирании всех данных в БД");
+            LOGGER.warn(sqlException);
         }
     }
 }
