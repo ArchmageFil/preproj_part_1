@@ -3,7 +3,6 @@ package jm.task.core.jdbc.util;
 import jm.task.core.jdbc.model.User;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
@@ -76,12 +75,12 @@ public class Util {
     /**
      * @return Новую сессию от Фабрики сессий
      */
-    public static Session getHibernateConnection() {
+    public static SessionFactory getHibernateConnection() {
         if (sessionFactory == null) {
             sessionFactory = createSessionFactory(mySqlConfig());
             LOGGER.info("создали фабрику сессий");
         }
-        return sessionFactory.openSession();
+        return sessionFactory;
     }
 
     /**
