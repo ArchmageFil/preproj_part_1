@@ -27,7 +27,7 @@ public class UserDaoHibernateImpl implements UserDao {
         Session session = sFactory.openSession();
         session.getTransaction().begin();
         int n = session.createSQLQuery(
-                "CREATE TABLE `mydbtest`.`lesson_114` (\n" +
+                "CREATE TABLE IF NOT EXISTS`mydbtest`.`lesson_114` (\n" +
                         "  `id` BIGINT(64) NOT NULL AUTO_INCREMENT,\n" +
                         "  `name` VARCHAR(255) NOT NULL,\n" +
                         "  `lastName` VARCHAR(255) NOT NULL,\n" +
@@ -44,7 +44,8 @@ public class UserDaoHibernateImpl implements UserDao {
         Session session = sFactory.openSession();
         session.getTransaction().begin();
         int n = session.createSQLQuery(
-                "DROP TABLE `mydbtest`.`lesson_114`").executeUpdate();
+                "DROP TABLE IF EXISTS`mydbtest`.`lesson_114`")
+                .executeUpdate();
         LOGGER.info("БД удалена, операций: {}", n);
         session.close();
     }
